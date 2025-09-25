@@ -17,28 +17,28 @@
 // HEADER FILE INCLUDES
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <cstdint>
+#include "ansi_color_codes.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
-// FUNCTION DECLARATIONS
+// MACROS
 ////////////////////////////////////////////////////////////////////////////////
 
-namespace icon_changer
-{
+#ifndef NDEBUG
 
 ///
-/// \brief CLI entry point for icon changing.
-/// \details Handles `--version` argument, validates input, and initiates the
-/// icon change.
-/// \param argument_count: Number of arguments.
-/// \param arguments: Argument values.
+/// \brief Logs a debug message to the terminal in cyan color.
+/// \details Message are prefixed with "[DEBUG]". It's available only in
+/// debug builds.
+/// \param format: The format string (compatible with std::print).
+/// \param __VA_ARGS__: Variadic arguments to be formatted into the message.
 ///
-extern void change_icon_cli(std::int32_t argument_count, const char** arguments);
+#define LOG(format, ...) std::println(CYN "[DEBUG] " format CRESET, ##__VA_ARGS__)
+
+#else
 
 ///
-/// \brief GUI stub entry point for icon changing.
-/// \details Currently unimplemented. Throws an exception.
+/// \brief Logs are stripped from compilation.
 ///
-extern void change_icon_gui();
+#define LOG(format, ...)
 
-} // namespace icon_changer
+#endif // NDEBUG

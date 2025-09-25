@@ -20,6 +20,8 @@
 #include <print>
 #include <cassert>
 
+#include "logger.hpp"
+
 ////////////////////////////////////////////////////////////////////////////////
 // METHOD DEFINITIONS
 ////////////////////////////////////////////////////////////////////////////////
@@ -136,6 +138,15 @@ void icon::convert_entries(const std::vector<icon_entry>& entries)
 		entry.bit_count     = icon_entry.bit_count;
 		entry.resource_size = icon_entry.image_size;
 		entry.icon_id       = ++icon_id;
+
+		LOG("width: {}", entry.width);
+		LOG("height: {}", entry.height);
+		LOG("color_count: {}", entry.color_count);
+		LOG("reserved: {}", entry.reserved);
+		LOG("planes: {}", entry.planes);
+		LOG("bit_count: {}", entry.bit_count);
+		LOG("resource_size: {}", entry.resource_size);
+		LOG("icon_id: {}\n", entry.icon_id);
 
 		resource_entries.push_back(std::move(entry));
 	}
