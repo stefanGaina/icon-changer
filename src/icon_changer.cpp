@@ -1,0 +1,162 @@
+////////////////////////////////////////////////////////////////////////////////
+// This is free and unencumbered software released into the public domain.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+//
+// For more information, please refer to https://unlicense.org
+////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////
+// HEADER FILE INCLUDES
+////////////////////////////////////////////////////////////////////////////////
+
+#include "icon_changer.hpp"
+
+#include <stdexcept>
+#include <vector>
+#include <filesystem>
+#include <print>
+#include <cassert>
+#include <windows.h>
+
+#include "icon.hpp"
+#include "ansi_color_codes.hpp"
+
+////////////////////////////////////////////////////////////////////////////////
+// LOCAL FUNCTIONS
+////////////////////////////////////////////////////////////////////////////////
+
+namespace icon_changer
+{
+
+static void validate_argument_count(std::int32_t argument_count, std::string_view program_path);
+
+static void change_icon(std::string_view icon_path, std::string_view executable_path);
+
+static void change_icon_s(std::string_view icon_path, std::string_view executable_path);
+
+static void set_images(void* exe_resource, icon& icon);
+
+static void set_icon_header(void* exe_resource, const icon& icon);
+
+////////////////////////////////////////////////////////////////////////////////
+// FUNCTION DEFINITIONS
+////////////////////////////////////////////////////////////////////////////////
+
+void change_icon_cli(const std::int32_t argument_count, const char** const arguments)
+{
+	static constexpr std::uint16_t VERSION_MAJOR = 1;
+	static constexpr std::uint16_t VERSION_MINOR = 0;
+	static constexpr std::uint16_t VERSION_PATCH = 0;
+
+	if (2 == argument_count && ("--version" == std::string_view{ arguments[1] } || "-v" == std::string_view{ arguments[1] }))
+	{
+		std::println("Icon-Changer version {}.{}.{}", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+		return;
+	}
+
+	validate_argument_count(argument_count, arguments[0]);
+	change_icon(arguments[1], arguments[2]);
+	std::println(GRN "Icon changed successfully!" CRESET);
+}
+
+void change_icon_gui()
+{
+	throw std::runtime_error{ "GUI not yet implemented!" };
+}
+
+static void validate_argument_count(const std::int32_t argument_count, const std::string_view program_path)
+{
+	static constexpr std::size_t REQUIRED_ARGUMENT_COUNT = 3;
+
+	if (REQUIRED_ARGUMENT_COUNT == argument_count)
+	{
+		return;
+	}
+
+	std::println("Usage: {} <path_to_icon> <path_to_exe>", program_path);
+
+	if (REQUIRED_ARGUMENT_COUNT > argument_count)
+	{
+		throw std::runtime_error{ std::format("{} parameter(s) missing!", REQUIRED_ARGUMENT_COUNT - argument_count) };
+	}
+
+	std::println(YEL "{} parameter(s) will be ignored..." CRESET, argument_count - REQUIRED_ARGUMENT_COUNT);
+}
+
+static void change_icon(const std::string_view icon_path, const std::string_view executable_path)
+{
+	if (!std::filesystem::exists(icon_path))
+	{
+		throw std::invalid_argument{ std::format("\"{}\" does not exist!", icon_path) };
+	}
+
+	if (!std::filesystem::exists(executable_path))
+	{
+		throw std::invalid_argument{ std::format("\"{}\" does not exist!", executable_path) };
+	}
+
+	change_icon_s(icon_path, executable_path);
+}
+
+static void change_icon_s(const std::string_view icon_path, const std::string_view executable_path)
+{
+	icon        icon         = { icon_path };
+	void* const exe_resource = BeginUpdateResourceA(executable_path.data(), false);
+
+	if (nullptr == exe_resource)
+	{
+		throw std::runtime_error{ "Failed to get executable's resource handle!" };
+	}
+
+	try
+	{
+		set_images(exe_resource, icon);
+		set_icon_header(exe_resource, icon);
+	}
+	catch (const std::exception& exception)
+	{
+		(void)EndUpdateResourceA(exe_resource, true);
+		throw;
+	}
+
+	if (!EndUpdateResourceA(exe_resource, false))
+	{
+		throw std::runtime_error{ "Failed to commit the changes to the executable!" };
+	}
+}
+
+static void set_images(void* const exe_resource, icon& icon)
+{
+	assert(nullptr != exe_resource);
+
+	std::vector<icon::entry> entries = icon.get_entries();
+	std::size_t              id      = 0;
+
+	for (std::vector<std::uint8_t>& image : icon.get_images())
+	{
+		if (!UpdateResourceA(exe_resource, RT_ICON, reinterpret_cast<char*>(++id), LANG_NEUTRAL, image.data(), image.size()))
+		{
+			throw std::runtime_error{ std::format("Failed to add icon with id {}!", id) };
+		}
+	}
+}
+
+static void set_icon_header(void* const exe_resource, const icon& icon)
+{
+	assert(nullptr != exe_resource);
+
+	std::vector<std::uint8_t> header = icon.get_header();
+
+	if (!UpdateResourceA(exe_resource, RT_GROUP_ICON, "MAINICON", LANG_NEUTRAL, header.data(), header.size()))
+	{
+		throw std::runtime_error{ "Failed to add icon group!" };
+	}
+}
+
+} // namespace icon_changer
