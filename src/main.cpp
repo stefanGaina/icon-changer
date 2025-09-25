@@ -51,6 +51,3 @@ std::int32_t main(const std::int32_t argument_count, const char** const argument
 
 	return EXIT_SUCCESS;
 }
-
-
-/* read 1st 22 bytes from ico file: https://en.wikipedia.org/wiki/ICO_(file_format) */

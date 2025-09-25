@@ -18,6 +18,7 @@
 #include "icon.hpp"
 
 #include <print>
+#include <cassert>
 
 ////////////////////////////////////////////////////////////////////////////////
 // METHOD DEFINITIONS
@@ -44,7 +45,7 @@ std::vector<std::uint8_t> icon::serialize(const icon::header& header)
 	std::vector<std::uint8_t> bytes = {};
 
 	bytes.resize(sizeof(header));
-	(void)std::memcpy(bytes.data(), &header, sizeof(header));
+	std::memcpy(bytes.data(), &header, sizeof(header));
 
 	return bytes;
 }
@@ -54,7 +55,7 @@ std::vector<std::uint8_t> icon::serialize(const icon::entry& entry)
 	std::vector<std::uint8_t> bytes = {};
 
 	bytes.resize(sizeof(entry));
-	(void)std::memcpy(bytes.data(), &entry, sizeof(entry));
+	std::memcpy(bytes.data(), &entry, sizeof(entry));
 
 	return bytes;
 }
@@ -64,7 +65,7 @@ void icon::read_header(std::ifstream& file)
 	static constexpr std::uint16_t ICO_IMAGE_TYPE = 1;
 	static constexpr std::uint16_t CUR_IMAGE_TYPE = 2;
 
-	(void)file.read(reinterpret_cast<char*>(&resource_header), sizeof(resource_header));
+	file.read(reinterpret_cast<char*>(&resource_header), sizeof(resource_header));
 
 	if (0 != resource_header.reserved)
 	{
@@ -89,7 +90,7 @@ std::vector<icon::icon_entry> icon::read_icon_entries(std::ifstream& file)
 	read_header(file);
 
 	entries.resize(resource_header.entries_count);
-	(void)file.read(reinterpret_cast<char*>(entries.data()), entries.size() * sizeof(icon_entry));
+	file.read(reinterpret_cast<char*>(entries.data()), entries.size() * sizeof(icon_entry));
 
 	return entries;
 }
@@ -102,11 +103,16 @@ void icon::read_images(std::ifstream& file, const std::vector<icon_entry>& entri
 	{
 		if (0 != entry.reserved)
 		{
-			throw std::invalid_argument{ "Entry reserved byte is {}, excepting 0!" };
+			throw std::invalid_argument{ std::format("Entry's reserved byte is {}, excepting 0!", entry.reserved) };
+		}
+
+		if (0 != entry.planes && 1 != entry.planes)
+		{
+			throw std::invalid_argument{ std::format("Entry's color planes is {}, expecting 0 or 1!", entry.planes) };
 		}
 
 		image.resize(entry.image_size);
-		(void)file.read(reinterpret_cast<char*>(image.data()), image.size());
+		file.read(reinterpret_cast<char*>(image.data()), image.size());
 
 		images.push_back(std::move(image));
 	}
@@ -114,11 +120,14 @@ void icon::read_images(std::ifstream& file, const std::vector<icon_entry>& entri
 
 void icon::convert_entries(const std::vector<icon_entry>& entries)
 {
-	entry		  entry	  = {};
+	entry         entry   = {};
 	std::uint16_t icon_id = 0;
 
 	for (const icon_entry& icon_entry : entries)
 	{
+		assert(0 == icon_entry.reserved);
+		assert(0 == icon_entry.planes || 1 == icon_entry.planes);
+
 		entry.width         = icon_entry.width;
 		entry.height        = icon_entry.height;
 		entry.color_count   = icon_entry.color_count;
@@ -137,8 +146,8 @@ icon::icon(const std::string_view file_path)
 	, resource_entries{}
 	, images{}
 {
-	std::ifstream           file    = open_file(file_path);
-	std::vector<icon_entry> entries = read_icon_entries(file);
+	std::ifstream                 file    = open_file(file_path);
+	const std::vector<icon_entry> entries = read_icon_entries(file);
 
 	read_images(file, entries);
 	convert_entries(entries);
@@ -159,11 +168,6 @@ std::vector<std::uint8_t> icon::get_header() const
 	}
 
 	return serialized_header;
-}
-
-std::vector<icon::entry>& icon::get_entries() noexcept
-{
-	return resource_entries;
 }
 
 std::vector<std::vector<std::uint8_t>>& icon::get_images() noexcept

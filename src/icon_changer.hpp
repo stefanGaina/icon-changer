@@ -31,3 +31,20 @@ extern void change_icon_cli(std::int32_t argument_count, const char** arguments)
 extern void change_icon_gui();
 
 } // namespace icon_changer
+
+///
+/// \brief CLI entry point for icon changing.
+///
+/// Handles `--version` argument, validates input, and initiates the icon change.
+///
+/// \param argument_count Number of arguments.
+/// \param arguments Argument values.
+///
+
+///
+/// \brief GUI stub entry point for icon changing.
+///
+/// Currently unimplemented. Throws an exception.
+///
+/// \throws std::runtime_error Always thrown until GUI is implemented.
+///

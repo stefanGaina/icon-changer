@@ -34,14 +34,46 @@
 namespace icon_changer
 {
 
+///
+/// \brief Validates the number of command-line arguments.
+/// \details If the argument count is incorrect, usage information is printed
+/// and an exception is thrown for too few arguments.
+/// \param argument_count: The number of command-line arguments passed.
+/// \param program_path: The path of the executing program (used in usage message).
+///
 static void validate_argument_count(std::int32_t argument_count, std::string_view program_path);
 
+///
+/// \brief Entry point to initiate the icon replacement in an executable.
+/// \details Verifies files existence and forwards the call to the secure
+/// version.
+/// \param icon_path: The path to the `.ico` file.
+/// \param executable_path: The path to the target `.exe` file.
+///
 static void change_icon(std::string_view icon_path, std::string_view executable_path);
 
+///
+/// \brief Secure version of icon replacement with rollback on failure.
+/// \details Opens the executable's resources, sets the icon images and header,
+/// and commits the changes.
+/// \param icon_path: The path to the `.ico` file.
+/// \param executable_path: The path to the target `.exe` file.
+///
 static void change_icon_s(std::string_view icon_path, std::string_view executable_path);
 
+///
+/// \brief Adds the individual icon image resources to the executable.
+/// \details Iterates over all images and adds them with appropriate resource IDs.
+/// \param exe_resource: Handle to the open resource section of the executable.
+/// \param icon: The parsed icon object containing image data.
+///
 static void set_images(void* exe_resource, icon& icon);
 
+///
+/// \brief Adds the group icon header (NEWHEADER + RESDIR) to the executable.
+/// \param exe_resource: Handle to the open resource section of the executable.
+/// \param icon: The parsed icon object containing the group icon header.
+///
 static void set_icon_header(void* exe_resource, const icon& icon);
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -121,7 +153,7 @@ static void change_icon_s(const std::string_view icon_path, const std::string_vi
 	}
 	catch (const std::exception& exception)
 	{
-		(void)EndUpdateResourceA(exe_resource, true);
+		EndUpdateResourceA(exe_resource, true);
 		throw;
 	}
 
@@ -135,14 +167,14 @@ static void set_images(void* const exe_resource, icon& icon)
 {
 	assert(nullptr != exe_resource);
 
-	std::vector<icon::entry> entries = icon.get_entries();
-	std::size_t              id      = 0;
+	std::size_t id = 0;
 
 	for (std::vector<std::uint8_t>& image : icon.get_images())
 	{
+		// We rely on the fact that we know IDs start from 1 in the header entries.
 		if (!UpdateResourceA(exe_resource, RT_ICON, reinterpret_cast<char*>(++id), LANG_NEUTRAL, image.data(), image.size()))
 		{
-			throw std::runtime_error{ std::format("Failed to add icon with id {}!", id) };
+			throw std::runtime_error{ std::format("Failed to add RT_ICON resource with id {} to executable!", id) };
 		}
 	}
 }
@@ -155,7 +187,7 @@ static void set_icon_header(void* const exe_resource, const icon& icon)
 
 	if (!UpdateResourceA(exe_resource, RT_GROUP_ICON, "MAINICON", LANG_NEUTRAL, header.data(), header.size()))
 	{
-		throw std::runtime_error{ "Failed to add icon group!" };
+		throw std::runtime_error{ "Failed to add RT_GROUP_ICON resource to executable!" };
 	}
 }
 
