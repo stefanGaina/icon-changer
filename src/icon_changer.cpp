@@ -83,7 +83,7 @@ static void set_icon_header(void* exe_resource, const icon& icon);
 void change_icon_cli(const std::int32_t argument_count, const char** const arguments)
 {
 	static constexpr std::uint16_t VERSION_MAJOR = 1;
-	static constexpr std::uint16_t VERSION_MINOR = 0;
+	static constexpr std::uint16_t VERSION_MINOR = 1;
 	static constexpr std::uint16_t VERSION_PATCH = 0;
 
 	if (2 == argument_count && ("--version" == std::string_view{ arguments[1] } || "-v" == std::string_view{ arguments[1] }))
