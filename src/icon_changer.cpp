@@ -88,7 +88,7 @@ void change_icon_cli(const std::int32_t argument_count, const char** const argum
 
 	if (2 == argument_count && ("--version" == std::string_view{ arguments[1] } || "-v" == std::string_view{ arguments[1] }))
 	{
-		std::println("Icon-Changer version {}.{}.{}", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+		std::println("icon-changer version {}.{}.{}", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
 		return;
 	}
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
-project(Icon-Changer LANGUAGES CXX)
+project(icon-changer LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -11,3 +11,9 @@ add_executable(icon-changer)
 
 file(GLOB SOURCES "src/*.cpp")
 target_sources(icon-changer PRIVATE ${SOURCES})
+
+if(BUILD_TESTS)
+	add_subdirectory(tests)
+else()
+	message(STATUS "Tests are disabled. To enable them, pass -DBUILD_TESTS=ON")
+endif()
