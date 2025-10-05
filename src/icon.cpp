@@ -71,7 +71,7 @@ void icon::read_header(std::ifstream& file)
 
 	if (0 != resource_header.reserved)
 	{
-		throw std::invalid_argument{ std::format("Header reserved bytes are {}, expecting 0!", resource_header.reserved) };
+		throw std::invalid_argument{ std::format("Header reserved bytes are 0x{:X}, expecting 0!", resource_header.reserved) };
 	}
 
 	if (CUR_IMAGE_TYPE == resource_header.type)
@@ -81,7 +81,7 @@ void icon::read_header(std::ifstream& file)
 
 	if (ICO_IMAGE_TYPE != resource_header.type)
 	{
-		throw std::invalid_argument{ std::format("Image type {} is invalid!", resource_header.type) };
+		throw std::invalid_argument{ std::format("Image type 0x{:X} is invalid!", resource_header.type) };
 	}
 }
 
@@ -105,12 +105,12 @@ void icon::read_images(std::ifstream& file, const std::vector<icon_entry>& entri
 	{
 		if (0 != entry.reserved)
 		{
-			throw std::invalid_argument{ std::format("Entry's reserved byte is {}, excepting 0!", entry.reserved) };
+			throw std::invalid_argument{ std::format("Entry's reserved byte is 0x{:X}, excepting 0!", entry.reserved) };
 		}
 
 		if (0 != entry.planes && 1 != entry.planes)
 		{
-			throw std::invalid_argument{ std::format("Entry's color planes is {}, expecting 0 or 1!", entry.planes) };
+			throw std::invalid_argument{ std::format("Entry's color planes is 0x{:X}, expecting 0 or 1!", entry.planes) };
 		}
 
 		image.resize(entry.image_size);
