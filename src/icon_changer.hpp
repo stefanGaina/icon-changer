@@ -33,7 +33,8 @@ namespace icon_changer
 /// \param argument_count: Number of arguments.
 /// \param arguments: Argument values.
 ///
-extern void change_icon_cli(std::int32_t argument_count, const char** arguments);
+extern void change_icon_cli(std::int32_t argument_count,
+                            const char** arguments);
 
 ///
 /// \brief GUI stub entry point for icon changing.

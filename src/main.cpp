@@ -15,18 +15,19 @@
 // HEADER FILE INCLUDES
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <print>
-#include <cstdlib>
 #include <cassert>
+#include <cstdlib>
+#include <print>
 
-#include "icon_changer.hpp"
 #include "ansi_color_codes.hpp"
+#include "icon_changer.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // ENTRY POINT
 ////////////////////////////////////////////////////////////////////////////////
 
-std::int32_t main(const std::int32_t argument_count, const char** const arguments)
+std::int32_t main(const std::int32_t argument_count,
+                  const char** const arguments)
 {
 	using namespace icon_changer;
 

@@ -17,8 +17,8 @@
 
 #include "icon.hpp"
 
-#include <format>
 #include <cassert>
+#include <format>
 
 #include "logger.hpp"
 
@@ -30,9 +30,9 @@ namespace icon_changer
 {
 
 icon::icon(const std::string_view file_path)
-	: resource_header{}
-	, resource_entries{}
-	, images{}
+    : resource_header{}
+    , resource_entries{}
+    , images{}
 {
 	std::ifstream                 file    = open_file(file_path);
 	const std::vector<icon_entry> entries = read_icon_entries(file);
@@ -136,7 +136,8 @@ std::vector<icon::icon_entry> icon::read_icon_entries(std::ifstream& file)
 	return entries;
 }
 
-void icon::read_images(std::ifstream& file, const std::vector<icon_entry>& entries)
+void icon::read_images(std::ifstream&                 file,
+                       const std::vector<icon_entry>& entries)
 {
 	std::vector<std::uint8_t> image = {};
 
