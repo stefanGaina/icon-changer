@@ -35,6 +35,9 @@ icon::icon(const std::string_view file_path)
     , images{}
 {
 	std::ifstream                 file    = open_file(file_path);
+	if(!file.is_open()){
+		throw std::runtime_error("Could not open icon file");
+	}
 	const std::vector<icon_entry> entries = read_icon_entries(file);
 
 	read_images(file, entries);
