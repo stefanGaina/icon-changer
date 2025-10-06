@@ -48,7 +48,7 @@ add_custom_target(merge_coverage
 add_custom_target(coverage_report
 	COMMAND llvm-cov show ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/icon_test.exe ${SOURCES}
 		--instr-profile=${CMAKE_BINARY_DIR}/tests/coverage/merged.profdata -format=html
-		-output-dir=${CMAKE_BINARY_DIR}/tests/coverage_report -show-branches=percent
+		-output-dir=${CMAKE_BINARY_DIR}/tests/coverage_report -show-branches=count -tab-size=4
 	COMMENT "Generating coverage report"
 	DEPENDS merge_coverage
 )
