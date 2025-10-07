@@ -38,6 +38,12 @@ cmake --build build
 cmake --build build --target coverage_report
 ```
 
+The coverage report will be located at:
+
+```
+build/tests/coverage_report/index.html
+```
+
 ## Code Formatting
 
 Before committing, make sure Git is configured to use the repository's hooks for formatting:
