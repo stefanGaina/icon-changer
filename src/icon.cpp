@@ -35,9 +35,6 @@ icon::icon(const std::string_view file_path)
     , images{}
 {
 	std::ifstream                 file    = open_file(file_path);
-	if(!file.is_open()){
-		throw std::runtime_error("Could not open icon file");
-	}
 	const std::vector<icon_entry> entries = read_icon_entries(file);
 
 	read_images(file, entries);
@@ -104,7 +101,11 @@ void icon::read_header(std::ifstream& file)
 	static constexpr std::uint16_t ICO_IMAGE_TYPE = 0x0001;
 	static constexpr std::uint16_t CUR_IMAGE_TYPE = 0x0002;
 
-	file.read(reinterpret_cast<char*>(&resource_header), sizeof(resource_header));
+	try{
+		file.read(reinterpret_cast<char*>(&resource_header), sizeof(resource_header));
+	}catch(const std::ios_base::failure& e){
+		throw std::runtime_error(std::format("Failed to read icon header: {}", e.what()));
+	}
 
 	if (0x0000 != resource_header.reserved)
 	{
@@ -134,7 +135,13 @@ std::vector<icon::icon_entry> icon::read_icon_entries(std::ifstream& file)
 	read_header(file);
 
 	entries.resize(resource_header.entries_count);
-	file.read(reinterpret_cast<char*>(entries.data()), entries.size() * sizeof(icon_entry));
+	
+	try{
+		file.read(reinterpret_cast<char*>(entries.data()), entries.size() * sizeof(icon_entry));
+	}catch(const std::ios_base::failure& e){
+		throw std::runtime_error(std::format("Failed to read icon entries: {}", e.what()));
+	}
+
 
 	return entries;
 }
@@ -157,7 +164,13 @@ void icon::read_images(std::ifstream&                 file,
 		}
 
 		image.resize(entry.image_size);
-		file.read(reinterpret_cast<char*>(image.data()), image.size());
+		
+		try{
+			file.read(reinterpret_cast<char*>(image.data()), image.size());
+		}catch(const std::ios_base::failure& e){
+			throw std::runtime_error(std::format("Failed to read icon image: {}", e.what()));
+		}
+
 
 		images.push_back(std::move(image));
 	}
