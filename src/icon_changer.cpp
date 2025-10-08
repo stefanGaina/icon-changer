@@ -88,6 +88,9 @@ static void set_icon_header(void*       exe_resource,
 void change_icon_cli(const std::int32_t argument_count,
                      const char** const arguments)
 {
+	assert(0 < argument_count);
+	assert(nullptr != arguments);
+
 	static constexpr std::uint16_t VERSION_MAJOR = 1;
 	static constexpr std::uint16_t VERSION_MINOR = 1;
 	static constexpr std::uint16_t VERSION_PATCH = 0;
