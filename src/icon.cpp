@@ -101,7 +101,14 @@ void icon::read_header(std::ifstream& file)
 	static constexpr std::uint16_t ICO_IMAGE_TYPE = 0x0001;
 	static constexpr std::uint16_t CUR_IMAGE_TYPE = 0x0002;
 
-	file.read(reinterpret_cast<char*>(&resource_header), sizeof(resource_header));
+	try
+	{
+		file.read(reinterpret_cast<char*>(&resource_header), sizeof(resource_header));
+	}
+	catch (const std::ios_base::failure& e)
+	{
+		throw std::runtime_error{ "Failed to read icon header from file." };
+	}
 
 	if (0x0000 != resource_header.reserved)
 	{
@@ -131,7 +138,15 @@ std::vector<icon::icon_entry> icon::read_icon_entries(std::ifstream& file)
 	read_header(file);
 
 	entries.resize(resource_header.entries_count);
-	file.read(reinterpret_cast<char*>(entries.data()), entries.size() * sizeof(icon_entry));
+
+	try
+	{
+		file.read(reinterpret_cast<char*>(entries.data()), entries.size() * sizeof(icon_entry));
+	}
+	catch (const std::ios_base::failure& e)
+	{
+		throw std::runtime_error{ "Failed to read icon entry data from file." };
+	}
 
 	return entries;
 }
@@ -154,7 +169,15 @@ void icon::read_images(std::ifstream&                 file,
 		}
 
 		image.resize(entry.image_size);
-		file.read(reinterpret_cast<char*>(image.data()), image.size());
+
+		try
+		{
+			file.read(reinterpret_cast<char*>(image.data()), image.size());
+		}
+		catch (const std::ios_base::failure& e)
+		{
+			throw std::runtime_error{ "Failed to read icon image data from file." };
+		}
 
 		images.push_back(std::move(image));
 	}
