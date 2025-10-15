@@ -19,6 +19,7 @@
 
 #include <cassert>
 #include <filesystem>
+#include <gdiplus.h>
 #include <print>
 #include <stdexcept>
 #include <vector>
@@ -26,6 +27,8 @@
 
 #include "ansi_color_codes.hpp"
 #include "icon.hpp"
+#pragma comment(lib, "Gdiplus.lib")
+using namespace Gdiplus;
 
 ////////////////////////////////////////////////////////////////////////////////
 // LOCAL FUNCTIONS
@@ -81,9 +84,166 @@ static void set_images(void* exe_resource,
 static void set_icon_header(void*       exe_resource,
                             const icon& icon);
 
+///
+/// \brief Detects the type of image file based on its extension.
+/// \param path: Path to the image file.
+/// \return One of: "ico", "png", "bmp", "jpg", "jpeg", or empty string if unknown.
+///
+static std::string get_image_type(const std::string_view path);
+
+///
+/// \brief Checks if the given image has a supported format.
+/// \details Converts the file extension to lowercase and verifies that it is
+/// one of the allowed types (.ico, .png, .bmp). Throws an exception if the
+/// format is unsupported.
+/// \param image: Path to the image file to validate.
+///
+static void verify_supported_image(const std::string_view& image);
+
+///
+/// \brief Prepares the icon for embedding into the executable.
+/// \details Validates the image format and (in the future) converts non-.ico
+/// formats (e.g. .png, .bmp) into a temporary .ico file.
+/// \param icon_path: The path to the input image file.
+/// \return Path to a valid .ico file ready for use.
+///
+static std::string prepare_icon(const std::string_view icon_path);
+
 ////////////////////////////////////////////////////////////////////////////////
 // FUNCTION DEFINITIONS
 ////////////////////////////////////////////////////////////////////////////////
+
+static void verify_supported_image(const std::string_view& image)
+{
+	namespace fs    = std::filesystem;
+	std::string ext = fs::path(image).extension().string();
+
+	// convert to lowercase
+	std::transform(ext.begin(),
+	               ext.end(),
+	               ext.begin(),
+	               [](unsigned char c)
+	               {
+		               return std::tolower(c);
+	               });
+	if (ext != ".ico" && ext != ".png" && ext != ".bmp")
+	{
+		throw std::invalid_argument{ std::format("Unsupported image type '{}'. Allowed formats: .ico, .png, .bmp", ext) };
+	}
+}
+
+static std::string get_image_type(const std::string_view path)
+{
+	namespace fs    = std::filesystem;
+	std::string ext = fs::path(path).extension().string();
+
+	//Convert to lowercase for safety
+	std::transform(ext.begin(),
+	               ext.end(),
+	               ext.begin(),
+	               [](unsigned char c)
+	               {
+		               return std::tolower(c);
+	               });
+
+	if (ext == ".ico")
+	{
+		return "ico";
+	}
+	if (ext == ".png")
+	{
+		return "png";
+	}
+	if (ext == ".bmp")
+	{
+		return "bmp";
+	}
+
+	return "";
+}
+
+static std::string prepare_icon(const std::string_view icon_path)
+{
+	namespace fs = std::filesystem;
+	verify_supported_image(icon_path);
+
+	const auto type = get_image_type(icon_path);
+	if (type == "ico")
+	{
+		//Already a valid .ico file - procceded as is
+		return std::string(icon_path);
+	}
+	else if (type == "bmp" || type == "png")
+	{
+		//Initialize GDI+
+		GdiplusStartupInput gdiplusStartupInput;
+		ULONG_PTR           gdiplusToken;
+
+		if (GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr) != Ok)
+		{
+			throw std::runtime_error("Failed to initialize GDI+");
+		}
+
+		std::string output_path = (fs::path(icon_path).parent_path() / "converted.ico").string();
+
+		//load source image
+		std::wstring winput(icon_path.begin(), icon_path.end());
+		Bitmap*      bmp = Bitmap::FromFile(winput.c_str());
+
+		if (!bmp || bmp->GetLastStatus() != Ok)
+		{
+			GdiplusShutdown(gdiplusToken);
+			throw std::runtime_error(std::format("Failed to load image {}", icon_path));
+		}
+
+		//Find ICO encoder
+		CLSID clsidEncoder;
+		UINT  numEncoders = 0, size = 0;
+		GetImageEncodersSize(&numEncoders, &size);
+		if (size == 0)
+		{
+			delete bmp;
+			GdiplusShutdown(gdiplusToken);
+			throw std::runtime_error("No image encoders found");
+		}
+		std::vector<BYTE> buffer(size);
+		ImageCodecInfo*   pImageCodecInfo = reinterpret_cast<ImageCodecInfo*>(buffer.data());
+		GetImageEncoders(numEncoders, size, pImageCodecInfo);
+
+		bool found = false;
+		for (auto j = 0; j < numEncoders; ++j)
+		{
+			if (wcscmp(pImageCodecInfo[j].MimeType, L"image/x-icon") == 0)
+			{
+				clsidEncoder = pImageCodecInfo[j].Clsid;
+				found        = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			delete bmp;
+			GdiplusShutdown(gdiplusToken);
+			throw std::runtime_error("ICO encoder not found");
+		}
+
+		std::wstring woutput(output_path.begin(), output_path.end());
+		if (bmp->Save(woutput.c_str(), &clsidEncoder, nullptr) != Ok)
+		{
+			delete bmp;
+			GdiplusShutdown(gdiplusToken);
+			throw std::runtime_error("Failed to save .ico file");
+		}
+		delete bmp;
+		GdiplusShutdown(gdiplusToken);
+		return output_path;
+	}
+	else
+	{
+		throw std::runtime_error("Not supported image file");
+	}
+}
 
 void change_icon_cli(const std::int32_t argument_count,
                      const char** const arguments)
@@ -100,7 +260,6 @@ void change_icon_cli(const std::int32_t argument_count,
 		std::println("icon-changer version {}.{}.{}", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
 		return;
 	}
-
 	validate_argument_count(argument_count, arguments[0]);
 	change_icon(arguments[1], arguments[2]);
 	std::println(GRN "Icon changed successfully!" CRESET);
@@ -144,7 +303,20 @@ static void change_icon(const std::string_view icon_path,
 		throw std::invalid_argument{ std::format("\"{}\" does not exist!", executable_path) };
 	}
 
-	change_icon_s(icon_path, executable_path);
+	std::string prepared_icon;
+
+	try
+	{
+		// checking file extension, and changing if needed
+		prepared_icon = prepare_icon(icon_path);
+	}
+	catch (std::runtime_error& e)
+	{
+		std::println("Error: {}", e.what());
+		return;
+	}
+
+	change_icon_s(prepared_icon, executable_path);
 }
 
 static void change_icon_s(const std::string_view icon_path,
