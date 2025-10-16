@@ -29,6 +29,7 @@
 #include "icon.hpp"
 #pragma comment(lib, "Gdiplus.lib")
 using namespace Gdiplus;
+using BitmapPtr = std::unique_ptr<Bitmap, void (*)(Bitmap*)>;
 
 ////////////////////////////////////////////////////////////////////////////////
 // LOCAL FUNCTIONS
@@ -109,6 +110,45 @@ static void verify_supported_image(const std::string_view& image);
 ///
 static std::string prepare_icon(const std::string_view icon_path);
 
+///
+/// \brief RAII wrapper for GDI+ initialization.
+/// \details Automatically calls GdiplusShutdown when destroyed to ensure
+/// proper cleanup of GDI+ resources.
+///
+struct GdiPlusGuard
+{
+	ULONG_PTR token;
+
+	~GdiPlusGuard()
+	{
+		GdiplusShutdown(token);
+	}
+};
+
+///
+/// \brief Loads a bitmap from a file and wraps it in a smart pointer.
+/// \param path Path to the image file to load.
+/// \return A smart pointer (BitmapPtr) managing the loaded GDI+ Bitmap.
+/// \throws std::runtime_error if the file cannot be loaded or is invalid.
+///
+static BitmapPtr load_bitmap(const std::string_view path);
+
+///
+/// \brief Finds the CLSID of the ICO encoder.
+/// \return The CLSID of the ICO encoder.
+/// \throws std::runtime_error if no ICO encoder is found.
+///
+static CLSID find_ico_encoder();
+
+///
+/// \brief Saves a GDI+ Bitmap as an ICO file.
+/// \param bmp Smart pointer to the Bitmap to save.
+/// \param output_path Path where the ICO file should be saved.
+/// \throws std::runtime_error if saving fails.
+///
+static void save_bmp_as_ico(BitmapPtr&         bmp,
+                            const std::string& output_path);
+
 ////////////////////////////////////////////////////////////////////////////////
 // FUNCTION DEFINITIONS
 ////////////////////////////////////////////////////////////////////////////////
@@ -162,6 +202,61 @@ static std::string get_image_type(const std::string_view path)
 	return "";
 }
 
+BitmapPtr load_bitmap(const std::string_view path)
+{
+	std::wstring wpath(path.begin(), path.end());
+	BitmapPtr    bmp(Bitmap::FromFile(wpath.c_str()),
+                  [](Bitmap* b)
+                  {
+                      if (b)
+                      {
+                          delete b;
+                      }
+                  });
+
+	if (!bmp || bmp->GetLastStatus() != Ok)
+	{
+		throw std::runtime_error(std::format("Failed to load image {}", path));
+	}
+
+	return bmp;
+}
+
+CLSID find_ico_encoder()
+{
+	UINT numEncoders = 0, size = 0;
+	GetImageEncodersSize(&numEncoders, &size);
+	if (size == 0)
+	{
+		throw std::runtime_error("No image encoders found");
+	}
+
+	std::vector<BYTE> buffer(size);
+	ImageCodecInfo*   pImageCodecInfo = reinterpret_cast<ImageCodecInfo*>(buffer.data());
+	GetImageEncoders(numEncoders, size, pImageCodecInfo);
+
+	for (UINT j = 0; j < numEncoders; ++j)
+	{
+		if (wcscmp(pImageCodecInfo[j].MimeType, L"image/x-icon") == 0)
+		{
+			return pImageCodecInfo[j].Clsid;
+		}
+	}
+
+	throw std::runtime_error("ICO encoder not found");
+}
+
+void save_bmp_as_ico(BitmapPtr&         bmp,
+                     const std::string& output_path)
+{
+	CLSID        clsidEncoder = find_ico_encoder();
+	std::wstring woutput(output_path.begin(), output_path.end());
+	if (bmp->Save(woutput.c_str(), &clsidEncoder, nullptr) != Ok)
+	{
+		throw std::runtime_error("Failed to save .ico file");
+	}
+}
+
 static std::string prepare_icon(const std::string_view icon_path)
 {
 	namespace fs = std::filesystem;
@@ -170,79 +265,30 @@ static std::string prepare_icon(const std::string_view icon_path)
 	const auto type = get_image_type(icon_path);
 	if (type == "ico")
 	{
-		//Already a valid .ico file - procceded as is
 		return std::string(icon_path);
 	}
-	else if (type == "bmp" || type == "png")
-	{
-		//Initialize GDI+
-		GdiplusStartupInput gdiplusStartupInput;
-		ULONG_PTR           gdiplusToken;
 
-		if (GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr) != Ok)
-		{
-			throw std::runtime_error("Failed to initialize GDI+");
-		}
-
-		std::string output_path = (fs::path(icon_path).parent_path() / "converted.ico").string();
-
-		//load source image
-		std::wstring winput(icon_path.begin(), icon_path.end());
-		Bitmap*      bmp = Bitmap::FromFile(winput.c_str());
-
-		if (!bmp || bmp->GetLastStatus() != Ok)
-		{
-			GdiplusShutdown(gdiplusToken);
-			throw std::runtime_error(std::format("Failed to load image {}", icon_path));
-		}
-
-		//Find ICO encoder
-		CLSID clsidEncoder;
-		UINT  numEncoders = 0, size = 0;
-		GetImageEncodersSize(&numEncoders, &size);
-		if (size == 0)
-		{
-			delete bmp;
-			GdiplusShutdown(gdiplusToken);
-			throw std::runtime_error("No image encoders found");
-		}
-		std::vector<BYTE> buffer(size);
-		ImageCodecInfo*   pImageCodecInfo = reinterpret_cast<ImageCodecInfo*>(buffer.data());
-		GetImageEncoders(numEncoders, size, pImageCodecInfo);
-
-		bool found = false;
-		for (auto j = 0; j < numEncoders; ++j)
-		{
-			if (wcscmp(pImageCodecInfo[j].MimeType, L"image/x-icon") == 0)
-			{
-				clsidEncoder = pImageCodecInfo[j].Clsid;
-				found        = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			delete bmp;
-			GdiplusShutdown(gdiplusToken);
-			throw std::runtime_error("ICO encoder not found");
-		}
-
-		std::wstring woutput(output_path.begin(), output_path.end());
-		if (bmp->Save(woutput.c_str(), &clsidEncoder, nullptr) != Ok)
-		{
-			delete bmp;
-			GdiplusShutdown(gdiplusToken);
-			throw std::runtime_error("Failed to save .ico file");
-		}
-		delete bmp;
-		GdiplusShutdown(gdiplusToken);
-		return output_path;
-	}
-	else
+	if (type != "bmp" && type != "png")
 	{
 		throw std::runtime_error("Not supported image file");
 	}
+
+	// --- GDI+ Initialization
+	GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR           gdiplusToken;
+	if (GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, nullptr) != Ok)
+	{
+		throw std::runtime_error("Failed to initialize GDI+");
+	}
+
+	GdiPlusGuard gdiGuard{ gdiplusToken };
+
+	// --- Load, convert and save
+	BitmapPtr   bmp         = load_bitmap(icon_path);
+	std::string output_path = (fs::path(icon_path).parent_path() / "converted.ico").string();
+	save_bmp_as_ico(bmp, output_path);
+
+	return output_path;
 }
 
 void change_icon_cli(const std::int32_t argument_count,
