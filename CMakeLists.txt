@@ -12,6 +12,14 @@ add_executable(icon-changer)
 file(GLOB SOURCES "src/*.cpp")
 target_sources(icon-changer PRIVATE ${SOURCES})
 
+if(MSVC OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    add_definitions(-D_WIN32 -D_WINDOWS)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fms-extensions")
+endif()
+
+
+target_link_libraries(icon-changer PRIVATE gdiplus)
+
 if(BUILD_TESTS)
 	add_subdirectory(tests)
 else()
