@@ -44,15 +44,6 @@ namespace icon_changer
 static void validate_argument_count(std::int32_t argument_count, std::string_view program_path);
 
 ///
-/// \brief Entry point to initiate the icon replacement in an executable.
-/// \details Verifies files existence and forwards the call to the secure
-/// version.
-/// \param icon_path: The path to the `.ico` file.
-/// \param executable_path: The path to the target `.exe` file.
-///
-static void change_icon(std::string_view icon_path, std::string_view executable_path);
-
-///
 /// \brief Secure version of icon replacement with rollback on failure.
 /// \details Opens the executable's resources, sets the icon images and header,
 /// and commits the changes.
@@ -97,9 +88,19 @@ void change_icon_cli(const std::int32_t argument_count, const char** const argum
 	std::println(GRN "Icon changed successfully!" CRESET);
 }
 
-void change_icon_gui()
+void change_icon(const std::string_view icon_path, const std::string_view executable_path)
 {
-	throw std::runtime_error{ "GUI not yet implemented!" };
+	if (!std::filesystem::exists(icon_path))
+	{
+		throw std::invalid_argument{ std::format("\"{}\" does not exist!", icon_path) };
+	}
+
+	if (!std::filesystem::exists(executable_path))
+	{
+		throw std::invalid_argument{ std::format("\"{}\" does not exist!", executable_path) };
+	}
+
+	change_icon_s(icon_path, executable_path);
 }
 
 static void validate_argument_count(const std::int32_t argument_count, const std::string_view program_path)
@@ -119,21 +120,6 @@ static void validate_argument_count(const std::int32_t argument_count, const std
 	}
 
 	std::println(YEL "{} parameter(s) will be ignored..." CRESET, argument_count - REQUIRED_ARGUMENT_COUNT);
-}
-
-static void change_icon(const std::string_view icon_path, const std::string_view executable_path)
-{
-	if (!std::filesystem::exists(icon_path))
-	{
-		throw std::invalid_argument{ std::format("\"{}\" does not exist!", icon_path) };
-	}
-
-	if (!std::filesystem::exists(executable_path))
-	{
-		throw std::invalid_argument{ std::format("\"{}\" does not exist!", executable_path) };
-	}
-
-	change_icon_s(icon_path, executable_path);
 }
 
 static void change_icon_s(const std::string_view icon_path, const std::string_view executable_path)

@@ -9,8 +9,22 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 add_executable(icon-changer)
 
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB SOURCES 
+    "src/*.cpp"
+    "src/GUI/*.cpp"
+)
 target_sources(icon-changer PRIVATE ${SOURCES})
+
+target_include_directories(icon-changer 
+    PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/GUI
+)
+
+# Link Win32 libraries for GUI
+if (WIN32)
+    target_link_libraries(icon-changer PRIVATE user32 gdi32 comdlg32)
+endif()
 
 if(BUILD_TESTS)
 	add_subdirectory(tests)

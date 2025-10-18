@@ -18,6 +18,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <cstdint>
+#include <print>
 
 ////////////////////////////////////////////////////////////////////////////////
 // FUNCTION DECLARATIONS
@@ -36,9 +37,12 @@ namespace icon_changer
 extern void change_icon_cli(std::int32_t argument_count, const char** arguments);
 
 ///
-/// \brief GUI stub entry point for icon changing.
-/// \details Currently unimplemented. Throws an exception.
+/// \brief Entry point to initiate the icon replacement in an executable.
+/// \details Verifies files existence and forwards the call to the secure
+/// version.
+/// \param icon_path: The path to the `.ico` file.
+/// \param executable_path: The path to the target `.exe` file.
 ///
-extern void change_icon_gui();
+extern void change_icon(std::string_view icon_path, std::string_view executable_path);
 
 } // namespace icon_changer

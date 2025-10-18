@@ -11,44 +11,17 @@
 // For more information, please refer to https://unlicense.org
 ////////////////////////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////////////////////////
-// HEADER FILE INCLUDES
-////////////////////////////////////////////////////////////////////////////////
-
-#include <print>
-#include <cstdlib>
-#include <cassert>
-
-#include "icon_changer.hpp"
-#include "ansi_color_codes.hpp"
-#include "GUI_public.hpp"
+#pragma once
 
 ////////////////////////////////////////////////////////////////////////////////
-// ENTRY POINT
+// FUNCTION DECLARATIONS
 ////////////////////////////////////////////////////////////////////////////////
 
-std::int32_t main(const std::int32_t argument_count, const char** const arguments)
-{
-	using namespace icon_changer;
-
-	assert(0 < argument_count);
-	assert(nullptr != arguments);
-
-	try
-	{
-		if (1 == argument_count)
-		{
-			LaunchGUI();
-			return EXIT_SUCCESS;
-		}
-
-		change_icon_cli(argument_count, arguments);
-	}
-	catch (const std::exception& exception)
-	{
-		std::println(RED "{}" CRESET, exception.what());
-		return EXIT_FAILURE;
-	}
-
-	return EXIT_SUCCESS;
-}
+///
+/// \brief GUI entry point for icon changing.
+/// \details Creates and displays a window that allows users to:
+///          - Select an executable file (.exe)
+///          - Select an icon file (.ico)
+///          - Apply the selected icon to the executable
+///
+void LaunchGUI(void);
