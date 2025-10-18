@@ -17,9 +17,9 @@
 // HEADER FILE INCLUDES
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <vector>
 #include <fstream>
 #include <string_view>
+#include <vector>
 
 ////////////////////////////////////////////////////////////////////////////////
 // MACROS
@@ -154,7 +154,8 @@ private:
 	/// \param file: The file to read from.
 	/// \param entries: A list of icon entries containing metadata for each image.
 	///
-	void read_images(std::ifstream& file, const std::vector<icon_entry>& entries);
+	void read_images(std::ifstream&                 file,
+	                 const std::vector<icon_entry>& entries);
 
 	///
 	/// \brief Converts the icon entries into resource entries member.

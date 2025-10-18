@@ -17,15 +17,15 @@
 
 #include "icon_changer.hpp"
 
-#include <stdexcept>
-#include <vector>
+#include <cassert>
 #include <filesystem>
 #include <print>
-#include <cassert>
+#include <stdexcept>
+#include <vector>
 #include <windows.h>
 
-#include "icon.hpp"
 #include "ansi_color_codes.hpp"
+#include "icon.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // LOCAL FUNCTIONS
@@ -41,7 +41,8 @@ namespace icon_changer
 /// \param argument_count: The number of command-line arguments passed.
 /// \param program_path: The path of the executing program (used in usage message).
 ///
-static void validate_argument_count(std::int32_t argument_count, std::string_view program_path);
+static void validate_argument_count(std::int32_t     argument_count,
+                                    std::string_view program_path);
 
 ///
 /// \brief Secure version of icon replacement with rollback on failure.
@@ -50,7 +51,8 @@ static void validate_argument_count(std::int32_t argument_count, std::string_vie
 /// \param icon_path: The path to the `.ico` file.
 /// \param executable_path: The path to the target `.exe` file.
 ///
-static void change_icon_s(std::string_view icon_path, std::string_view executable_path);
+static void change_icon_s(std::string_view icon_path,
+                          std::string_view executable_path);
 
 ///
 /// \brief Adds the individual icon image resources to the executable.
@@ -58,21 +60,27 @@ static void change_icon_s(std::string_view icon_path, std::string_view executabl
 /// \param exe_resource: Handle to the open resource section of the executable.
 /// \param icon: The parsed icon object containing image data.
 ///
-static void set_images(void* exe_resource, icon& icon);
+static void set_images(void* exe_resource,
+                       icon& icon);
 
 ///
 /// \brief Adds the group icon header (NEWHEADER + RESDIR) to the executable.
 /// \param exe_resource: Handle to the open resource section of the executable.
 /// \param icon: The parsed icon object containing the group icon header.
 ///
-static void set_icon_header(void* exe_resource, const icon& icon);
+static void set_icon_header(void*       exe_resource,
+                            const icon& icon);
 
 ////////////////////////////////////////////////////////////////////////////////
 // FUNCTION DEFINITIONS
 ////////////////////////////////////////////////////////////////////////////////
 
-void change_icon_cli(const std::int32_t argument_count, const char** const arguments)
+void change_icon_cli(const std::int32_t argument_count,
+                     const char** const arguments)
 {
+	assert(0 < argument_count);
+	assert(nullptr != arguments);
+
 	static constexpr std::uint16_t VERSION_MAJOR = 1;
 	static constexpr std::uint16_t VERSION_MINOR = 1;
 	static constexpr std::uint16_t VERSION_PATCH = 0;
@@ -103,7 +111,8 @@ void change_icon(const std::string_view icon_path, const std::string_view execut
 	change_icon_s(icon_path, executable_path);
 }
 
-static void validate_argument_count(const std::int32_t argument_count, const std::string_view program_path)
+static void validate_argument_count(const std::int32_t     argument_count,
+                                    const std::string_view program_path)
 {
 	static constexpr std::size_t REQUIRED_ARGUMENT_COUNT = 3;
 
@@ -149,7 +158,8 @@ static void change_icon_s(const std::string_view icon_path, const std::string_vi
 	}
 }
 
-static void set_images(void* const exe_resource, icon& icon)
+static void set_images(void* const exe_resource,
+                       icon&       icon)
 {
 	assert(nullptr != exe_resource);
 
@@ -165,7 +175,8 @@ static void set_images(void* const exe_resource, icon& icon)
 	}
 }
 
-static void set_icon_header(void* const exe_resource, const icon& icon)
+static void set_icon_header(void* const exe_resource,
+                            const icon& icon)
 {
 	assert(nullptr != exe_resource);
 

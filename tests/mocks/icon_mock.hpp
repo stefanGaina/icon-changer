@@ -17,34 +17,50 @@
 // HEADER FILE INCLUDES
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef NDEBUG
+#include <gmock/gmock.h>
 
-#include <print>
-
-#include "ansi_color_codes.hpp"
-
-#endif // NDEBUG
+#include "icon.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
-// MACROS
+// TYPE DEFINITIONS
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef NDEBUG
+namespace icon_changer
+{
 
-///
-/// \brief Logs a debug message to the terminal in cyan color.
-/// \details Message are prefixed with "[DEBUG]". It's available only in
-/// debug builds.
-/// \param format: The format string (compatible with std::print).
-/// \param __VA_ARGS__: Variadic arguments to be formatted into the message.
-///
-#define LOG(format, ...) std::println(CYN "[DEBUG] " format CRESET, ##__VA_ARGS__)
+class icon_mock final
+{
+public:
+	MOCK_METHOD(std::vector<std::uint8_t>, get_header, (), (const));
+	MOCK_METHOD(std::vector<std::vector<std::uint8_t>>&, get_images, (), ());
 
-#else
+	icon_mock()
+	{
+		if (nullptr == obj)
+		{
+			return;
+		}
 
-///
-/// \brief Logs are stripped from compilation.
-///
-#define LOG(format, ...)
+		obj = std::make_unique<icon_mock>();
+	}
 
-#endif // NDEBUG
+	static std::unique_ptr<icon_mock> obj;
+};
+
+std::unique_ptr<icon_mock> icon_mock::obj = nullptr;
+
+icon::icon(const std::string_view file_path)
+{
+}
+
+std::vector<std::uint8_t> icon::get_header() const
+{
+	return icon_mock::obj->get_header();
+}
+
+std::vector<std::vector<std::uint8_t>>& icon::get_images() noexcept
+{
+	return icon_mock::obj->get_images();
+}
+
+} // namespace icon_changer
