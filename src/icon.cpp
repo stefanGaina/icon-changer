@@ -19,8 +19,10 @@
 
 #include <cassert>
 #include <format>
+#include <filesystem> //for std::remove
 
 #include "logger.hpp"
+#include "bitmap.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // METHOD DEFINITIONS
@@ -49,9 +51,9 @@ std::vector<std::uint8_t> icon::get_header() const
 
 	serialized_header.insert(serialized_header.end(), header_bytes.begin(), header_bytes.end());
 
-	for (const entry& entry : resource_entries)
+	for (const entry& e : resource_entries)
 	{
-		entry_bytes = serialize(entry);
+		entry_bytes = serialize(e);
 		serialized_header.insert(serialized_header.end(), entry_bytes.begin(), entry_bytes.end());
 	}
 
@@ -212,6 +214,33 @@ void icon::convert_entries(const std::vector<icon_entry>& entries)
 		LOG("icon_id: {}\n", entry.icon_id);
 
 		resource_entries.push_back(std::move(entry));
+	}
+}
+icon icon::from_bmp(const std::string_view bmp_path) 
+{
+	bitmap bmp;
+	if (!bmp.loadFromImage(bmp_path.data())) {
+		throw std::runtime_error("Failed to load BMP image from: " + std::string(bmp_path));
+	}
+
+	const std::string temp_ico_path = std::string(bmp_path) + ".temp.ico";
+	try {
+		if (!bmp.saveToIco(temp_ico_path)) {
+			throw std::runtime_error("Failed to save temporary .ICO file");
+		}
+
+		// Create icon from temporary ICO file
+		icon ico{ temp_ico_path };
+
+		// Clean up temporary file
+		std::filesystem::remove(temp_ico_path);
+
+		LOG("Successfully created icon from BMP: {}", bmp_path);
+		return ico;
+	}
+	catch (...) {
+		std::filesystem::remove(temp_ico_path);
+		throw;
 	}
 }
 

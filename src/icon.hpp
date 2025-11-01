@@ -32,6 +32,7 @@
 ///
 #define PACKED __attribute__((packed))
 
+
 ////////////////////////////////////////////////////////////////////////////////
 // TYPE DEFINITIONS
 ////////////////////////////////////////////////////////////////////////////////
@@ -68,6 +69,11 @@ public:
 	/// represents the data for one image.
 	///
 	std::vector<std::vector<std::uint8_t>>& get_images() noexcept;
+
+	/// \brief Creates an icon from a 24-bit BMP file
+	/// \brief bmp_path: Path to the source BMP file
+	/// \return icon object with one image
+	static icon from_bmp(const std::string_view bmp_path);
 
 private:
 	///
