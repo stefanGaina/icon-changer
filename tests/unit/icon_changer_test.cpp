@@ -20,6 +20,8 @@
 #include "icon_mock.hpp"
 #include "icon_changer.cpp"
 
+#include <stdexcept>
+
 using namespace testing;
 using namespace icon_changer;
 
@@ -97,4 +99,34 @@ TEST(icon_changer, change_icon_gui)
 		change_icon_gui();
 	},
 	ThrowsMessage<std::runtime_error>(HasSubstr("GUI not yet implemented!")));
+}
+
+TEST(icon_changer_utils, verify_suppoted_image_valid) {
+	EXPECT_NO_THROW(verify_supported_image("icon.ico"));
+	EXPECT_NO_THROW(verify_supported_image("bitmap.bmp"));
+	EXPECT_NO_THROW(verify_supported_image("image.png"));
+	EXPECT_NO_THROW(verify_supported_image("ICON.ICO"));
+}
+
+TEST(icon_changer_utils, verify_supported_image_notvalid) {
+	EXPECT_THROW(verify_supported_image("file.txt"), std::invalid_argument);
+	EXPECT_THROW(verify_supported_image("image.jpeg"), std::invalid_argument);
+	EXPECT_THROW(verify_supported_image("photo.jpg"), std::invalid_argument);
+}
+TEST(icon_changer_utils, get_image_type_recognizes_formats) {
+	EXPECT_EQ(get_image_type("icon.ico"), "ico");
+	EXPECT_EQ(get_image_type("image.jpg"), "");
+	EXPECT_EQ(get_image_type("bitmap.bmp"), "bmp");
+	EXPECT_EQ(get_image_type("unknow.jpeg"), "");
+	EXPECT_EQ(get_image_type("doc.txt"), "");
+	EXPECT_EQ(get_image_type("strange.FILE.PNG"), "png"); // checking lowercase work properly
+	EXPECT_EQ(get_image_type("no_extension"), "");
+}
+TEST(icon_changer_utils, prepare_icon_existing_ico) {
+	const std::string path = std::string(TEST_DATA_PATH) + "image1.ico";
+	EXPECT_EQ(prepare_icon(path), path);
+}
+TEST(icon_changer_utils, prepare_icon_unsupported_file) {
+	const std::string path = std::string(TEST_DATA_PATH) + "image1.jpeg";
+	EXPECT_THROW(prepare_icon(path), std::invalid_argument);
 }

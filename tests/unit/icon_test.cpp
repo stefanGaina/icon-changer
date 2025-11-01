@@ -127,9 +127,9 @@ TEST(icon, get_success)
 	const std::vector<std::uint8_t>         header          = icon.get_header();
 	std::vector<std::vector<std::uint8_t>>& images          = icon.get_images();
 	const std::vector<std::uint8_t>         expected_header = { 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x20, 0x20, 0x00, 0x00, 0x01, 0x00,
-																0x20, 0x00, 0xA8, 0x10, 0x00, 0x00, 0x01, 0x00 };
+																0x20, 0x00, 0xA8, 0x10, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00 };
 
-	EXPECT_EQ(20, header.size());
+	EXPECT_EQ(22, header.size());
 	EXPECT_EQ(expected_header, header);
 
 	EXPECT_EQ(1, images.size());

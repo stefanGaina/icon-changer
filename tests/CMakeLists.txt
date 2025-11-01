@@ -9,6 +9,12 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(googletest)
 
+set(SOURCES
+    ${CMAKE_SOURCE_DIR}/src/bitmap.cpp
+    ${CMAKE_SOURCE_DIR}/src/icon.cpp
+    ${CMAKE_SOURCE_DIR}/src/icon_changer.cpp
+)
+
 enable_testing()
 include(GoogleTest)
 
@@ -24,12 +30,18 @@ foreach(test_file IN LISTS TEST_SOURCES)
 	get_filename_component(test_name ${test_file} NAME_WE)
 
 	add_executable(${test_name} ${test_file})
-	target_link_libraries(${test_name} gtest gmock gtest_main)
+	target_link_libraries(${test_name} gtest gmock gtest_main icon_changer_lib)
 	target_compile_definitions(${test_name} PRIVATE TEST_DATA_PATH="${CMAKE_SOURCE_DIR}/tests/data/")
 
-	gtest_discover_tests(${test_name})
-	list(APPEND TEST_OBJECT_ARGS -object=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${test_name}$<TARGET_FILE_SUFFIX:${test_name}>)
+	#gtest_discover_tests(${test_name})
+	#list(APPEND TEST_OBJECT_ARGS -object=${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${test_name}$<TARGET_FILE_SUFFIX:${test_name}>)
+	
+	add_test(NAME ${test_name} COMMAND ${test_name})
+    set_tests_properties(${test_name} PROPERTIES WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+    list(APPEND TEST_OBJECT_ARGS -object=$<TARGET_FILE:${test_name}>)
 endforeach()
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 add_custom_target(clean_coverage
 	COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/tests/coverage
