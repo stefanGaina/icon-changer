@@ -19,8 +19,8 @@
 #include <cstdlib>
 #include <print>
 
-#include "ansi_color_codes.hpp"
 #include "icon_changer.hpp"
+#include "utility.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // ENTRY POINT

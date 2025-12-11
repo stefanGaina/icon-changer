@@ -11,56 +11,67 @@
 // For more information, please refer to https://unlicense.org
 ////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
 ////////////////////////////////////////////////////////////////////////////////
 // HEADER FILE INCLUDES
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <gmock/gmock.h>
-
-#include "icon.hpp"
+#include "bmp_file.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
-// TYPE DEFINITIONS
+// METHOD DEFINITIONS
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace icon_changer
 {
 
-class icon_mock final
+bmp_file::bmp_file(const std::string_view file_path)
 {
-public:
-	MOCK_METHOD(std::vector<std::uint8_t>&, get_header, (), (const));
-	MOCK_METHOD(std::vector<std::vector<std::uint8_t>>&, get_images, (), ());
+	std::ifstream file = open_file(file_path);
 
-	icon_mock()
+	read_header(file);
+	read_image(file);
+}
+
+bmp_file::header bmp_file::get_header() const noexcept
+{
+	return header_obj;
+}
+
+std::vector<std::uint8_t>& bmp_file::get_image() noexcept
+{
+	return image;
+}
+
+void bmp_file::read_header(std::ifstream& file)
+{
+	try
 	{
-		if (nullptr == obj)
-		{
-			return;
-		}
-
-		obj = std::make_unique<icon_mock>();
+		file.read(reinterpret_cast<char*>(&header_obj), sizeof(header_obj));
+	}
+	catch (const std::exception& exception)
+	{
+		throw std::runtime_error{ std::format("Failed to read {} bytes from BMP header!", sizeof(header_obj)) };
 	}
 
-	static std::unique_ptr<icon_mock> obj;
-};
-
-std::unique_ptr<icon_mock> icon_mock::obj = nullptr;
-
-icon::icon(const std::string_view file_path)
-{
+	LOG("type: {}", header_obj.type);
+	LOG("file_size: {}", header_obj.file_size);
+	LOG("reserved1: {}", header_obj.reserved1);
+	LOG("reserved2: {}", header_obj.reserved2);
+	LOG("image_offset: {}\n", header_obj.image_offset);
 }
 
-std::vector<std::uint8_t>& icon::get_header()
+void bmp_file::read_image(std::ifstream& file)
 {
-	return icon_mock::obj->get_header();
-}
+	image.resize(header_obj.file_size - sizeof(header));
 
-std::vector<std::vector<std::uint8_t>>& icon::get_images() noexcept
-{
-	return icon_mock::obj->get_images();
+	try
+	{
+		file.read(reinterpret_cast<char*>(image.data()), image.size());
+	}
+	catch (const std::exception& exception)
+	{
+		throw std::runtime_error{ std::format("Failed to read {} bytes from BMP image!", image.size()) };
+	}
 }
 
 } // namespace icon_changer

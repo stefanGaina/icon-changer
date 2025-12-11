@@ -24,8 +24,8 @@
 #include <vector>
 #include <windows.h>
 
-#include "ansi_color_codes.hpp"
 #include "icon.hpp"
+#include "utility.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // LOCAL FUNCTIONS
@@ -68,18 +68,18 @@ static void change_icon_s(std::string_view icon_path,
 /// \brief Adds the individual icon image resources to the executable.
 /// \details Iterates over all images and adds them with appropriate resource IDs.
 /// \param exe_resource: Handle to the open resource section of the executable.
-/// \param icon: The parsed icon object containing image data.
+/// \param icon: The parsed icon object containing image data. TODO
 ///
-static void set_images(void* exe_resource,
-                       icon& icon);
+static void set_images(void*                                   exe_resource,
+                       std::vector<std::vector<std::uint8_t>>& icon_images);
 
 ///
 /// \brief Adds the group icon header (NEWHEADER + RESDIR) to the executable.
 /// \param exe_resource: Handle to the open resource section of the executable.
-/// \param icon: The parsed icon object containing the group icon header.
+/// \param icon: The parsed icon object containing the group icon header. TODO
 ///
-static void set_icon_header(void*       exe_resource,
-                            const icon& icon);
+static void set_icon_header(void*                      exe_resource,
+                            std::vector<std::uint8_t>& icon_header);
 
 ////////////////////////////////////////////////////////////////////////////////
 // FUNCTION DEFINITIONS
@@ -160,8 +160,8 @@ static void change_icon_s(const std::string_view icon_path,
 
 	try
 	{
-		set_images(exe_resource, icon);
-		set_icon_header(exe_resource, icon);
+		set_images(exe_resource, icon.get_images());
+		set_icon_header(exe_resource, icon.get_header());
 	}
 	catch (const std::exception& exception)
 	{
@@ -175,14 +175,14 @@ static void change_icon_s(const std::string_view icon_path,
 	}
 }
 
-static void set_images(void* const exe_resource,
-                       icon&       icon)
+static void set_images(void* const                             exe_resource,
+                       std::vector<std::vector<std::uint8_t>>& icon_images)
 {
 	assert(nullptr != exe_resource);
 
 	std::size_t id = 0;
 
-	for (std::vector<std::uint8_t>& image : icon.get_images())
+	for (std::vector<std::uint8_t>& image : icon_images)
 	{
 		// We rely on the fact that we know IDs start from 1 in the header entries.
 		if (!UpdateResourceA(exe_resource, RT_ICON, reinterpret_cast<char*>(++id), LANG_NEUTRAL, image.data(), image.size()))
@@ -192,14 +192,12 @@ static void set_images(void* const exe_resource,
 	}
 }
 
-static void set_icon_header(void* const exe_resource,
-                            const icon& icon)
+static void set_icon_header(void* const                exe_resource,
+                            std::vector<std::uint8_t>& icon_header)
 {
 	assert(nullptr != exe_resource);
 
-	std::vector<std::uint8_t> header = icon.get_header();
-
-	if (!UpdateResourceA(exe_resource, RT_GROUP_ICON, "MAINICON", LANG_NEUTRAL, header.data(), header.size()))
+	if (!UpdateResourceA(exe_resource, RT_GROUP_ICON, "MAINICON", LANG_NEUTRAL, icon_header.data(), icon_header.size()))
 	{
 		throw std::runtime_error{ "Failed to add RT_GROUP_ICON resource to executable!" };
 	}

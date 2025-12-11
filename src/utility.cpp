@@ -11,40 +11,32 @@
 // For more information, please refer to https://unlicense.org
 ////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
 ////////////////////////////////////////////////////////////////////////////////
 // HEADER FILE INCLUDES
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef NDEBUG
+#include "utility.hpp"
 
-#include <print>
-
-#include "ansi_color_codes.hpp"
-
-#endif // NDEBUG
+#include <stdexcept>
 
 ////////////////////////////////////////////////////////////////////////////////
-// MACROS
+// FUNCTION DEFINITIONS
 ////////////////////////////////////////////////////////////////////////////////
 
-#ifndef NDEBUG
+namespace icon_changer
+{
 
-///
-/// \brief Logs a debug message to the terminal in cyan color.
-/// \details Message are prefixed with "[DEBUG]". It's available only in
-/// debug builds.
-/// \param format: The format string (compatible with std::print).
-/// \param __VA_ARGS__: Variadic arguments to be formatted into the message.
-///
-#define LOG(format, ...) std::println(CYN "[DEBUG] " format CRESET, ##__VA_ARGS__)
+std::ifstream open_file(const std::string_view file_path)
+{
+	std::ifstream file = std::ifstream{ file_path.data(), std::ios::binary };
 
-#else
+	if (!file.is_open())
+	{
+		throw std::invalid_argument{ std::format("Failed to open \"{}\"!", file_path) };
+	}
 
-///
-/// \brief Logs are stripped from compilation.
-///
-#define LOG(format, ...)
+	file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+	return std::move(file);
+}
 
-#endif // NDEBUG
+} // namespace icon_changer

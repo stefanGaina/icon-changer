@@ -18,9 +18,10 @@
 #include "icon.hpp"
 
 #include <cassert>
+#include <filesystem>
 #include <format>
 
-#include "logger.hpp"
+#include "bmp_file.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // METHOD DEFINITIONS
@@ -30,32 +31,29 @@ namespace icon_changer
 {
 
 icon::icon(const std::string_view file_path)
-    : resource_header{}
-    , resource_entries{}
+    : header{}
     , images{}
 {
-	std::ifstream                 file    = open_file(file_path);
-	const std::vector<icon_entry> entries = read_icon_entries(file);
+	const std::string file_type = std::filesystem::path{ file_path }.extension().string();
 
-	read_images(file, entries);
-	convert_entries(entries);
-}
-
-std::vector<std::uint8_t> icon::get_header() const
-{
-	std::vector<std::uint8_t> serialized_header = {};
-	std::vector<std::uint8_t> header_bytes      = serialize(resource_header);
-	std::vector<std::uint8_t> entry_bytes       = {};
-
-	serialized_header.insert(serialized_header.end(), header_bytes.begin(), header_bytes.end());
-
-	for (const entry& entry : resource_entries)
+	if (".ico" == file_type)
 	{
-		entry_bytes = serialize(entry);
-		serialized_header.insert(serialized_header.end(), entry_bytes.begin(), entry_bytes.end());
+		load_ico(file_path);
+		return;
 	}
 
-	return serialized_header;
+	if (".bmp" == file_type)
+	{
+		load_bmp(file_path);
+		return;
+	}
+
+	throw std::invalid_argument{ std::format("File type \"{}\" is not supported!", file_type) };
+}
+
+std::vector<std::uint8_t>& icon::get_header()
+{
+	return header;
 }
 
 std::vector<std::vector<std::uint8_t>>& icon::get_images() noexcept
@@ -63,144 +61,18 @@ std::vector<std::vector<std::uint8_t>>& icon::get_images() noexcept
 	return images;
 }
 
-std::ifstream icon::open_file(const std::string_view file_path)
+void icon::load_ico(const std::string_view file_path)
 {
-	std::ifstream file = std::ifstream{ file_path.data(), std::ios::binary };
+	ico_file                  ico_file = { file_path };
+	std::vector<std::uint8_t> bytes    = {};
+	std::uint16_t             id       = 0;
 
-	if (!file.is_open())
+	header = serialize(ico_file.get_header());
+
+	for (ico_file::entry entry : ico_file.get_entries())
 	{
-		throw std::invalid_argument{ std::format("Failed to open \"{}\"!", file_path) };
-	}
-
-	file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	return std::move(file);
-}
-
-std::vector<std::uint8_t> icon::serialize(const icon::header& header)
-{
-	std::vector<std::uint8_t> bytes = {};
-
-	bytes.resize(sizeof(header));
-	std::memcpy(bytes.data(), &header, sizeof(header));
-
-	return bytes;
-}
-
-std::vector<std::uint8_t> icon::serialize(const icon::entry& entry)
-{
-	std::vector<std::uint8_t> bytes = {};
-
-	bytes.resize(sizeof(entry));
-	std::memcpy(bytes.data(), &entry, sizeof(entry));
-
-	return bytes;
-}
-
-void icon::read_header(std::ifstream& file)
-{
-	static constexpr std::uint16_t ICO_IMAGE_TYPE = 0x0001;
-	static constexpr std::uint16_t CUR_IMAGE_TYPE = 0x0002;
-
-	try
-	{
-		file.read(reinterpret_cast<char*>(&resource_header), sizeof(resource_header));
-	}
-	catch (const std::ios_base::failure& e)
-	{
-		throw std::runtime_error{ "Failed to read icon header from file." };
-	}
-
-	if (0x0000 != resource_header.reserved)
-	{
-		throw std::invalid_argument{ std::format("Header reserved bytes are 0x{:X}, expecting 0x{:X}!", resource_header.reserved, 0x0000) };
-	}
-
-	if (CUR_IMAGE_TYPE == resource_header.type)
-	{
-		throw std::invalid_argument{ "Image is of CUR type, not ICO!" };
-	}
-
-	if (ICO_IMAGE_TYPE != resource_header.type)
-	{
-		throw std::invalid_argument{ std::format("Image type 0x{:X} is invalid!", resource_header.type) };
-	}
-
-	if (0x0000 == resource_header.entries_count)
-	{
-		throw std::invalid_argument{ "Icon does not have image entries!" };
-	}
-}
-
-std::vector<icon::icon_entry> icon::read_icon_entries(std::ifstream& file)
-{
-	std::vector<icon_entry> entries = {};
-
-	read_header(file);
-
-	entries.resize(resource_header.entries_count);
-
-	try
-	{
-		file.read(reinterpret_cast<char*>(entries.data()), entries.size() * sizeof(icon_entry));
-	}
-	catch (const std::ios_base::failure& e)
-	{
-		throw std::runtime_error{ "Failed to read icon entry data from file." };
-	}
-
-	return entries;
-}
-
-void icon::read_images(std::ifstream&                 file,
-                       const std::vector<icon_entry>& entries)
-{
-	std::vector<std::uint8_t> image = {};
-
-	for (const icon_entry& entry : entries)
-	{
-		if (0x00 != entry.reserved)
-		{
-			throw std::invalid_argument{ std::format("Entry's reserved byte is 0x{:X}, excepting 0x{:X}!", entry.reserved, 0x00) };
-		}
-
-		if (0x0000 != entry.planes && 0x0001 != entry.planes)
-		{
-			throw std::invalid_argument{ std::format("Entry's color planes is 0x{:X}, expecting 0x{:X} or 0x{:X}!", entry.planes, 0x0000, 0x0001) };
-		}
-
-		image.resize(entry.image_size);
-
-		try
-		{
-			file.read(reinterpret_cast<char*>(image.data()), image.size());
-		}
-		catch (const std::ios_base::failure& e)
-		{
-			throw std::runtime_error{ "Failed to read icon image data from file." };
-		}
-
-		images.push_back(std::move(image));
-	}
-}
-
-void icon::convert_entries(const std::vector<icon_entry>& entries)
-{
-	entry         entry   = {};
-	std::uint16_t icon_id = 0;
-
-	for (const icon_entry& icon_entry : entries)
-	{
-		assert(0 == icon_entry.reserved);
-		assert(0 == icon_entry.planes || 1 == icon_entry.planes);
-
-		entry.width         = icon_entry.width;
-		entry.height        = icon_entry.height;
-		entry.color_count   = icon_entry.color_count;
-		entry.reserved      = icon_entry.reserved;
-		entry.planes        = icon_entry.planes;
-		entry.bit_count     = icon_entry.bit_count;
-		entry.resource_size = icon_entry.image_size;
-		entry.icon_id       = ++icon_id;
+		assert(0 == entry.reserved);
+		assert(0 == entry.planes || 1 == entry.planes);
 
 		LOG("width: {}", entry.width);
 		LOG("height: {}", entry.height);
@@ -208,11 +80,88 @@ void icon::convert_entries(const std::vector<icon_entry>& entries)
 		LOG("reserved: {}", entry.reserved);
 		LOG("planes: {}", entry.planes);
 		LOG("bit_count: {}", entry.bit_count);
-		LOG("resource_size: {}", entry.resource_size);
-		LOG("icon_id: {}\n", entry.icon_id);
+		LOG("image_size: {}", entry.image_size);
+		LOG("image_offset: {}", entry.image_offset);
 
-		resource_entries.push_back(std::move(entry));
+		entry.image_offset = ++id;
+		LOG("image_id: {}\n", *reinterpret_cast<std::uint16_t*>(&entry.image_offset));
+
+		bytes = serialize(entry);
+		header.insert(header.end(), bytes.begin(), bytes.end() - 2);
 	}
+
+	images = std::move(ico_file.get_images());
+}
+
+void icon::load_bmp(const std::string_view file_path)
+{
+	bmp_file                  bmp_file = { file_path };
+	std::vector<std::uint8_t> bytes    = {};
+
+	header = serialize(ico_file::header{ 0, 1, 1 });
+
+	bytes = serialize(dib_header_to_entry(bmp_file.get_image()));
+	header.insert(header.end(), bytes.begin(), bytes.end() - 2);
+
+	images.push_back(std::move(bmp_file.get_image()));
+}
+
+ico_file::entry icon::dib_header_to_entry(std::vector<std::uint8_t>& dib_image)
+{
+	static constexpr std::size_t   HEIGHT_OFFSET = sizeof(std::uint32_t) + sizeof(std::int32_t);
+	static constexpr std::uint32_t BI_RGB        = 0;
+	static constexpr std::uint16_t DEFAULT_ID    = 1;
+
+	ico_file::entry      entry      = {};
+	bmp_file::dib_header dib_header = {};
+
+	std::memcpy(&dib_header, dib_image.data(), sizeof(dib_header));
+
+	LOG("header_size: {}", dib_header.header_size);
+	LOG("width: {}", dib_header.width);
+	LOG("height: {}", dib_header.height);
+	LOG("planes: {}", dib_header.planes);
+	LOG("bit_count: {}", dib_header.bit_count);
+	LOG("compression_method: {}", dib_header.compression_method);
+	LOG("image_size: {}", dib_header.image_size);
+	LOG("horizontal_resolution: {}", dib_header.horizontal_resolution);
+	LOG("vertical_resolution: {}", dib_header.vertical_resolution);
+	LOG("color_count: {}", dib_header.color_count);
+	LOG("ignored: {}\n", dib_header.ignored);
+
+	if (sizeof(dib_header) != dib_header.header_size)
+	{
+		throw std::invalid_argument{ std::format("BMP header is not BITMAPINFOHEADER! (size: {})", sizeof(dib_header.header_size)) };
+	}
+
+	if (256 < dib_header.width)
+	{
+		throw std::invalid_argument{ std::format("Width {} is larger than the 256 limit!", dib_header.width) };
+	}
+
+	if (256 < dib_header.height)
+	{
+		throw std::invalid_argument{ std::format("Height {} is larger than the 256 limit!", dib_header.height) };
+	}
+
+	if (BI_RGB != dib_header.compression_method)
+	{
+		throw std::invalid_argument{ std::format("{} compression method is not supported!", dib_header.compression_method) };
+	}
+
+	entry.width        = static_cast<std::uint8_t>(dib_header.width);
+	entry.height       = static_cast<std::uint8_t>(dib_header.height);
+	entry.color_count  = static_cast<std::uint8_t>(dib_header.color_count);
+	entry.reserved     = 0;
+	entry.planes       = dib_header.planes;
+	entry.bit_count    = dib_header.bit_count;
+	entry.image_size   = static_cast<std::uint32_t>(dib_image.size());
+	entry.image_offset = DEFAULT_ID;
+
+	dib_header.height *= 2;
+	std::memcpy(dib_image.data() + HEIGHT_OFFSET, &dib_header.height, sizeof(dib_header.height));
+
+	return entry;
 }
 
 } // namespace icon_changer

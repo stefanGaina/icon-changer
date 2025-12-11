@@ -46,7 +46,7 @@ TEST(icon, constructor_header_read_fail)
 	{
 		icon icon = { std::string{ TEST_DATA_PATH } + "header_incomplete.ico" };
 	},
-	ThrowsMessage<std::runtime_error>(HasSubstr("Failed to read icon header from file.")));
+	ThrowsMessage<std::runtime_error>(HasSubstr("Failed to read icon header from file!")));
 }
 
 TEST(icon, constructor_header_reserved_fail)
@@ -91,7 +91,7 @@ TEST(icon, constructor_entry_read_fail)
 	{
 		icon icon = { std::string{ TEST_DATA_PATH } + "entry_incomplete.ico" };
 	},
-	ThrowsMessage<std::runtime_error>(HasSubstr("Failed to read icon entry data from file.")));
+	ThrowsMessage<std::runtime_error>(HasSubstr("Failed to read icon entry data from file!")));
 }
 
 TEST(icon, constructor_entry_reserved_fail)
@@ -118,7 +118,7 @@ TEST(icon, constructor_image_incomplete_fail)
 	{
 		icon icon = { std::string{ TEST_DATA_PATH } + "image_incomplete.ico" };
 	},
-	ThrowsMessage<std::runtime_error>(HasSubstr("Failed to read icon image data from file.")));
+	ThrowsMessage<std::runtime_error>(HasSubstr("Failed to read icon image data from file!")));
 }
 
 TEST(icon, get_success)

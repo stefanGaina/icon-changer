@@ -17,9 +17,7 @@
 // HEADER FILE INCLUDES
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <gmock/gmock.h>
-
-#include "icon.hpp"
+#include "utility.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
 // TYPE DEFINITIONS
@@ -28,39 +26,56 @@
 namespace icon_changer
 {
 
-class icon_mock final
+///
+/// \brief TODO
+/// \see https://en.wikipedia.org/wiki/BMP_file_format
+///
+class bmp_file final
 {
 public:
-	MOCK_METHOD(std::vector<std::uint8_t>&, get_header, (), (const));
-	MOCK_METHOD(std::vector<std::vector<std::uint8_t>>&, get_images, (), ());
-
-	icon_mock()
+	struct PACKED header final
 	{
-		if (nullptr == obj)
-		{
-			return;
-		}
+		std::uint16_t type;
+		std::uint32_t file_size;
+		std::uint16_t reserved1;
+		std::uint16_t reserved2;
+		std::uint32_t image_offset;
+	};
 
-		obj = std::make_unique<icon_mock>();
-	}
+	// BITMAPINFOHEADER
+	struct PACKED dib_header final
+	{
+		std::uint32_t header_size;
+		std::int32_t  width;
+		std::int32_t  height;
+		std::uint16_t planes;
+		std::uint16_t bit_count;
+		std::uint32_t compression_method;
+		std::uint32_t image_size;
+		std::int32_t  horizontal_resolution;
+		std::int32_t  vertical_resolution;
+		std::uint32_t color_count;
+		std::uint32_t ignored;
+	};
 
-	static std::unique_ptr<icon_mock> obj;
+	///
+	/// \brief TODO
+	///
+	bmp_file(std::string_view file_path);
+
+	header get_header() const noexcept;
+
+	std::vector<std::uint8_t>& get_image() noexcept;
+
+private:
+	void read_header(std::ifstream& file);
+
+	void read_image(std::ifstream& file);
+
+private:
+	header header_obj;
+
+	std::vector<std::uint8_t> image;
 };
-
-std::unique_ptr<icon_mock> icon_mock::obj = nullptr;
-
-icon::icon(const std::string_view file_path)
-{
-}
-
-std::vector<std::uint8_t>& icon::get_header()
-{
-	return icon_mock::obj->get_header();
-}
-
-std::vector<std::vector<std::uint8_t>>& icon::get_images() noexcept
-{
-	return icon_mock::obj->get_images();
-}
 
 } // namespace icon_changer
