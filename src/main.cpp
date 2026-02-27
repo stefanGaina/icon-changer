@@ -19,7 +19,8 @@
 #include <cstdlib>
 #include <print>
 
-#include "icon_changer.hpp"
+#include "cli.hpp"
+#include "gui.hpp"
 #include "utility.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////

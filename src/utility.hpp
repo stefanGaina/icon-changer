@@ -63,11 +63,30 @@
 #endif // NDEBUG
 
 ////////////////////////////////////////////////////////////////////////////////
-// FUNCTION DECLARATIONS
+// CONSTANTS
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace icon_changer
 {
+
+///
+/// \brief The major version of the application.
+///
+inline constexpr std::uint16_t VERSION_MAJOR = 1;
+
+///
+/// \brief The minor version of the application.
+///
+inline constexpr std::uint16_t VERSION_MINOR = 1;
+
+///
+/// \brief The patch version of the application.
+///
+inline constexpr std::uint16_t VERSION_PATCH = 0;
+
+////////////////////////////////////////////////////////////////////////////////
+// FUNCTION DECLARATIONS
+////////////////////////////////////////////////////////////////////////////////
 
 ///
 /// \brief Opens the specified file in binary mode and sets exceptions for

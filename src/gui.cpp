@@ -11,29 +11,24 @@
 // For more information, please refer to https://unlicense.org
 ////////////////////////////////////////////////////////////////////////////////
 
-#pragma once
-
 ////////////////////////////////////////////////////////////////////////////////
 // HEADER FILE INCLUDES
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <string_view>
+#include "gui.hpp"
+
+#include <stdexcept>
 
 ////////////////////////////////////////////////////////////////////////////////
-// FUNCTION DECLARATIONS
+// FUNCTION DEFINITIONS
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace icon_changer
 {
 
-///
-/// \brief Entry point to initiate the icon replacement in an executable.
-/// \details Verifies files existence and forwards the call to the secure
-/// version.
-/// \param icon_path: The path to the icon (ICO, BMP) file.
-/// \param executable_path: The path to the target executable file.
-///
-extern void change_icon(std::string_view icon_path,
-                        std::string_view executable_path);
+void change_icon_gui()
+{
+	throw std::runtime_error{ "GUI not yet implemented!" };
+}
 
 } // namespace icon_changer

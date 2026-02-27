@@ -30,10 +30,9 @@ namespace icon_changer
 {
 
 ///
-/// \brief Class to handle and manipulate icon (ICO) files.
+/// \brief Class to handle and manipulate icon (ICO, BMP) files.
 /// \details This class allows for reading, extracting metadata and images,
 /// as well as serializing the data back into PE resource format.
-/// \see https://en.wikipedia.org/wiki/ICO_(file_format)
 ///
 class icon final
 {
@@ -60,12 +59,23 @@ public:
 	std::vector<std::vector<std::uint8_t>>& get_images() noexcept;
 
 private:
-	// TODO
-
+	///
+	/// \brief Loads an ICO file and prepares it for use as a PE icon resource.
+	/// \param file_path: Path to the ICO file.
+	///
 	void load_ico(std::string_view file_path);
 
+	///
+	/// \brief Loads a BMP file and converts it into a single-entry ICO resource.
+	/// \param file_path: Path to the BMP file.
+	///
 	void load_bmp(std::string_view file_path);
 
+	///
+	/// \brief Converts a DIB header into an ICO directory entry.
+	/// \param dib_image: Raw DIB image data.
+	/// \returns A populated ICO directory entry corresponding to the DIB.
+	///
 	ico_file::entry dib_header_to_entry(std::vector<std::uint8_t>& dib_image);
 
 private:

@@ -17,7 +17,7 @@
 // HEADER FILE INCLUDES
 ////////////////////////////////////////////////////////////////////////////////
 
-#include <string_view>
+#include <cstdint>
 
 ////////////////////////////////////////////////////////////////////////////////
 // FUNCTION DECLARATIONS
@@ -27,13 +27,13 @@ namespace icon_changer
 {
 
 ///
-/// \brief Entry point to initiate the icon replacement in an executable.
-/// \details Verifies files existence and forwards the call to the secure
-/// version.
-/// \param icon_path: The path to the icon (ICO, BMP) file.
-/// \param executable_path: The path to the target executable file.
+/// \brief CLI entry point for icon changing.
+/// \details Handles `--version` argument, validates input, and initiates the
+/// icon change.
+/// \param argument_count: Number of arguments.
+/// \param arguments: Argument values.
 ///
-extern void change_icon(std::string_view icon_path,
-                        std::string_view executable_path);
+extern void change_icon_cli(std::int32_t argument_count,
+                            const char** arguments);
 
 } // namespace icon_changer
