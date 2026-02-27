@@ -29,7 +29,9 @@ namespace icon_changer
 {
 
 ///
-/// \brief TODO
+/// \brief Represents a Windows ICO file.
+/// \details It parses ICONDIR, ICONDIRENTRY and raw image data for each entry.
+/// \see https://en.wikipedia.org/wiki/ICO_(file_format)
 ///
 class ico_file final
 {
@@ -62,28 +64,35 @@ public:
 
 public:
 	///
-	/// \brief TODO
+	/// \brief Reads the header, entries and images of an ICO file.
+	/// \param file_path: Path to the ICO file.
 	///
 	ico_file(std::string_view file_path);
 
 	///
-	/// \brief TODO
+	/// \brief Gets the ICO file header.
+	/// \returns A copy of the ICO header structure.
 	///
 	header get_header() const noexcept;
 
 	///
-	/// \brief TODO
+	/// \brief Gets the list of image directory entries.
+	/// \returns A reference to the directory entries.
 	///
 	std::vector<entry>& get_entries() noexcept;
 
 	///
-	/// \brief TODO
+	/// \brief Gets the raw image data for all icon images.
+	/// \returns A reference to the image byte buffers.
 	///
 	std::vector<std::vector<std::uint8_t>>& get_images() noexcept;
 
 private:
 	///
-	/// \brief TODO
+	/// \brief Reads raw image bytes from the file stream.
+	/// \param file: The file to read from.
+	/// \param size: Number of bytes to read.
+	/// \returns The image data in binary format.
 	///
 	[[nodiscard]] static std::vector<std::uint8_t> read_image(std::ifstream& file,
 	                                                          std::uint32_t  size);
