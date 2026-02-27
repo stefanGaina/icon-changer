@@ -77,7 +77,7 @@ inline constexpr std::uint16_t VERSION_MAJOR = 1;
 ///
 /// \brief The minor version of the application.
 ///
-inline constexpr std::uint16_t VERSION_MINOR = 1;
+inline constexpr std::uint16_t VERSION_MINOR = 2;
 
 ///
 /// \brief The patch version of the application.
