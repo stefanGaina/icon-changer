@@ -16,13 +16,10 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "icon_changer.hpp"
+#include <windows.h>
 
 #include <cassert>
 #include <filesystem>
-#include <print>
-#include <stdexcept>
-#include <vector>
-#include <windows.h>
 
 #include "icon.hpp"
 #include "utility.hpp"

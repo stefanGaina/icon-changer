@@ -149,6 +149,10 @@ IfMacros:
   - KJ_IF_MAYBE
 IncludeBlocks: Regroup
 IncludeCategories:
+  - Regex: '^<windows\.h>$'
+    Priority: 0
+    SortPriority: 0
+    CaseSensitive: false
   - Regex: '^<.*>'
     Priority: 1
     SortPriority: 0
@@ -160,7 +164,7 @@ IncludeCategories:
 IncludeIsMainRegex: '(Test)?$'
 IncludeIsMainSourceRegex: ''
 IndentAccessModifiers: false
-IndentCaseBlocks: true
+IndentCaseBlocks: false
 IndentCaseLabels: true
 IndentExportBlock: false
 IndentExternBlock: NoIndent

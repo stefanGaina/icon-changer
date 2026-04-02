@@ -16,9 +16,14 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
-#include "icon_mock.hpp"
+#include "cli.cpp"
 #include "icon_changer.cpp"
+#include "icon.cpp"
+#include "ico_file.cpp"
+#include "bmp_file.cpp"
+#include "utility.cpp"
 
 using namespace testing;
 using namespace icon_changer;
@@ -37,6 +42,20 @@ TEST(icon_changer, change_icon_cli_version_success)
 TEST(icon_changer, change_icon_cli_v_success)
 {
 	const char* arguments[] = { "icon-changer.exe", "-v" };
+
+	change_icon_cli(sizeof(arguments) / sizeof(arguments[0]), arguments);
+}
+
+TEST(icon_changer, change_icon_cli_help_success)
+{
+	const char* arguments[] = { "icon-changer.exe", "--help" };
+
+	change_icon_cli(sizeof(arguments) / sizeof(arguments[0]), arguments);
+}
+
+TEST(icon_changer, change_icon_cli_h_success)
+{
+	const char* arguments[] = { "icon-changer.exe", "-h" };
 
 	change_icon_cli(sizeof(arguments) / sizeof(arguments[0]), arguments);
 }
@@ -90,11 +109,14 @@ TEST(icon_changer, change_icon_cli_inexistent_exe_fail)
 	ThrowsMessage<std::invalid_argument>(HasSubstr(std::format("\"{}\" does not exist!", EXE_PATH))));
 }
 
-TEST(icon_changer, change_icon_gui)
-{
-	ASSERT_THAT([]()
-	{
-		change_icon_gui();
-	},
-	ThrowsMessage<std::runtime_error>(HasSubstr("GUI not yet implemented!")));
-}
+// TEST(icon_changer, change_icon_cli_success)
+// {
+// 	const char* arguments[] = { "icon-changer.exe", "icon.ico", "executable.exe" };
+// 	change_icon_cli(sizeof(arguments) / sizeof(arguments[0]), arguments);
+// }
+
+// TEST(icon_changer, change_icon_cli_extra_param_success)
+// {
+// 	const char* arguments[] = { "icon-changer.exe", "icon.ico", "executable.exe", "extra" };
+// 	change_icon_cli(sizeof(arguments) / sizeof(arguments[0]), arguments);
+// }

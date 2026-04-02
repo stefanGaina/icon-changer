@@ -11,30 +11,31 @@
 // For more information, please refer to https://unlicense.org
 ////////////////////////////////////////////////////////////////////////////////
 
+#pragma once
+
 ////////////////////////////////////////////////////////////////////////////////
 // HEADER FILE INCLUDES
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "utility.hpp"
+#include <windows.h>
+
+#include <string_view>
 
 ////////////////////////////////////////////////////////////////////////////////
-// FUNCTION DEFINITIONS
+// FUNCTION DECLARATIONS
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace icon_changer
 {
 
-std::ifstream open_file(const std::string_view file_path)
-{
-	std::ifstream file = std::ifstream{ file_path.data(), std::ios::binary };
+// TODO
+extern void hide_status_message(HWND window) noexcept;
 
-	if (!file.is_open())
-	{
-		throw std::invalid_argument{ std::format("Failed to open \"{}\"!", file_path) };
-	}
+extern void show_status_message(HWND             window,
+                                std::string_view text,
+                                bool             is_error = false) noexcept;
 
-	file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	return std::move(file);
-}
+extern void draw_status_message(HDC  device_context,
+                                RECT rectangle) noexcept;
 
 } // namespace icon_changer

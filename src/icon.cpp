@@ -19,7 +19,6 @@
 
 #include <cassert>
 #include <filesystem>
-#include <format>
 
 #include "bmp_file.hpp"
 
@@ -109,7 +108,7 @@ void icon::load_bmp(const std::string_view file_path)
 ico_file::entry icon::dib_header_to_entry(std::vector<std::uint8_t>& dib_image)
 {
 	static constexpr std::size_t   HEIGHT_OFFSET = sizeof(std::uint32_t) + sizeof(std::int32_t);
-	static constexpr std::uint32_t BI_RGB        = 0;
+	static constexpr std::uint32_t BI_RGB_       = 0;
 	static constexpr std::uint16_t DEFAULT_ID    = 1;
 
 	ico_file::entry      entry      = {};
@@ -144,7 +143,7 @@ ico_file::entry icon::dib_header_to_entry(std::vector<std::uint8_t>& dib_image)
 		throw std::invalid_argument{ std::format("Height {} is larger than the 256 limit!", dib_header.height) };
 	}
 
-	if (BI_RGB != dib_header.compression_method)
+	if (BI_RGB_ != dib_header.compression_method)
 	{
 		throw std::invalid_argument{ std::format("{} compression method is not supported!", dib_header.compression_method) };
 	}

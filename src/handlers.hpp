@@ -11,30 +11,53 @@
 // For more information, please refer to https://unlicense.org
 ////////////////////////////////////////////////////////////////////////////////
 
+#pragma once
+
 ////////////////////////////////////////////////////////////////////////////////
 // HEADER FILE INCLUDES
 ////////////////////////////////////////////////////////////////////////////////
 
-#include "utility.hpp"
+#include <windows.h>
+
+#include <optional>
 
 ////////////////////////////////////////////////////////////////////////////////
-// FUNCTION DEFINITIONS
+// FUNCTION DECLARATIONS
 ////////////////////////////////////////////////////////////////////////////////
 
 namespace icon_changer
 {
 
-std::ifstream open_file(const std::string_view file_path)
-{
-	std::ifstream file = std::ifstream{ file_path.data(), std::ios::binary };
+// TODO
+std::int64_t handle_create(HWND     window,
+                           void*    button_procedure,
+                           void*    edit_procedure,
+                           WNDPROC& button_ptr,
+                           WNDPROC& edit_ptr) noexcept;
 
-	if (!file.is_open())
-	{
-		throw std::invalid_argument{ std::format("Failed to open \"{}\"!", file_path) };
-	}
+std::int64_t handle_command(HWND          window,
+                            std::uint64_t param1) noexcept;
 
-	file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	return std::move(file);
-}
+std::int64_t handle_erase_background(HWND          window,
+                                     std::uint64_t param1) noexcept;
+
+std::optional<std::int64_t> handle_draw_item(HWND          window,
+                                             std::uint64_t param2) noexcept;
+
+std::int64_t handle_color_static(std::uint64_t param1) noexcept;
+
+void handle_timer(HWND          window,
+                  std::uint64_t param1) noexcept;
+
+std::int64_t handle_destroy() noexcept;
+
+void handle_mouse_move(HWND window) noexcept;
+
+void handle_mouse_leave(HWND window) noexcept;
+
+void handle_paint(HWND window) noexcept;
+
+void handle_drop_files(HWND          window,
+                       std::uint64_t param1) noexcept;
 
 } // namespace icon_changer

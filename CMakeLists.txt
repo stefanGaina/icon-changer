@@ -7,10 +7,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-add_executable(icon-changer)
+add_executable(${PROJECT_NAME})
 
 file(GLOB SOURCES "src/*.cpp")
-target_sources(icon-changer PRIVATE ${SOURCES})
+target_sources(${PROJECT_NAME} PRIVATE ${SOURCES})
+target_link_libraries(${PROJECT_NAME} PRIVATE dwmapi)
 
 if(BUILD_TESTS)
 	add_subdirectory(tests)

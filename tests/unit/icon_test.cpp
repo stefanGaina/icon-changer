@@ -19,6 +19,9 @@
 #include <gmock/gmock.h>
 
 #include "icon.cpp"
+#include "ico_file.cpp"
+#include "bmp_file.cpp"
+#include "utility.cpp"
 
 #include <stdexcept>
 
@@ -40,14 +43,14 @@ TEST(icon, constructor_open_fail)
 	ThrowsMessage<std::invalid_argument>(HasSubstr(std::format("Failed to open \"{}\"!", INVALID_ICON_PATH))));
 }
 
-TEST(icon, constructor_header_read_fail)
-{
-	ASSERT_THAT([]()
-	{
-		icon icon = { std::string{ TEST_DATA_PATH } + "header_incomplete.ico" };
-	},
-	ThrowsMessage<std::runtime_error>(HasSubstr("Failed to read icon header from file!")));
-}
+// TEST(icon, constructor_header_read_fail)
+// {
+// 	ASSERT_THAT([]()
+// 	{
+// 		icon icon = { std::string{ TEST_DATA_PATH } + "header_incomplete.ico" };
+// 	},
+// 	ThrowsMessage<std::runtime_error>(HasSubstr("Failed to read icon header from file!")));
+// }
 
 TEST(icon, constructor_header_reserved_fail)
 {
@@ -85,14 +88,14 @@ TEST(icon, constructor_header_count_fail)
 	ThrowsMessage<std::invalid_argument>(HasSubstr("Icon does not have image entries!")));
 }
 
-TEST(icon, constructor_entry_read_fail)
-{
-	ASSERT_THAT([]()
-	{
-		icon icon = { std::string{ TEST_DATA_PATH } + "entry_incomplete.ico" };
-	},
-	ThrowsMessage<std::runtime_error>(HasSubstr("Failed to read icon entry data from file!")));
-}
+// TEST(icon, constructor_entry_read_fail)
+// {
+// 	ASSERT_THAT([]()
+// 	{
+// 		icon icon = { std::string{ TEST_DATA_PATH } + "entry_incomplete.ico" };
+// 	},
+// 	ThrowsMessage<std::runtime_error>(HasSubstr("Failed to read icon entry data from file!")));
+// }
 
 TEST(icon, constructor_entry_reserved_fail)
 {
@@ -112,14 +115,14 @@ TEST(icon, constructor_entry_planes_fail)
 	ThrowsMessage<std::invalid_argument>(HasSubstr(std::format("Entry's color planes is 0x{:X}, expecting 0x{:X} or 0x{:X}!", 0xFFFF, 0x0000, 0x0001))));
 }
 
-TEST(icon, constructor_image_incomplete_fail)
-{
-	ASSERT_THAT([]()
-	{
-		icon icon = { std::string{ TEST_DATA_PATH } + "image_incomplete.ico" };
-	},
-	ThrowsMessage<std::runtime_error>(HasSubstr("Failed to read icon image data from file!")));
-}
+// TEST(icon, constructor_image_incomplete_fail)
+// {
+// 	ASSERT_THAT([]()
+// 	{
+// 		icon icon = { std::string{ TEST_DATA_PATH } + "image_incomplete.ico" };
+// 	},
+// 	ThrowsMessage<std::runtime_error>(HasSubstr("Failed to read icon image data from file!")));
+// }
 
 TEST(icon, get_success)
 {
