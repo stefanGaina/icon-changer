@@ -4,8 +4,8 @@
 # Usage
 You can *download the latest released binary* from [here](https://github.com/stefanGaina/icon-changer/releases) or build from source (instructions are [here](CONTRIBUTING.md)).
 
-To execute run ```icon-changer path/to/icon path/to/executable```.
+To execute run ```icon-changer path/to/icon path/to/executable``` or run the application as follows:
 
-Icon can be in **ICO** format (recommended) or in **BMP** format. Images can be converted to **ICO** format.
+https://github.com/user-attachments/assets/69232518-7921-447e-b15b-cc9b9ed3095a
 
-The executable needs to be in **EXE** format and it is recommended to not have an icon already (this will be improved in upcoming releases).
+Icon can be in **ICO** format (recommended) or in **BMP** format. The executable needs to be in **EXE** format.
